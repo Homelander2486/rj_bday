@@ -1648,7 +1648,9 @@ const App = (() => {
     }, 2600);
 
     // Event listeners
-    document.getElementById('beginBtn').addEventListener('click', () => {
+    document.getElementById('beginBtn').addEventListener('click', (e) => {
+      if (currentScreen !== 'opening') return;
+      e.target.blur(); // Remove focus to prevent accidental enter-key presses later
       Music.play();
       Particles.enrich();
       goTo('datelock');
