@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>I made something for you.</title>
+<meta name="description" content="Someone made this just for you.">
+<meta property="og:title" content="I made something for you.">
+<meta property="og:description" content="Someone took a little time to make something. Open it.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#FFF7F5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+body {
+  font-family: 'Inter', 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #FFF7F5;
+  color: #292525;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
+}
+body.scroll-locked { overflow: hidden; position: fixed; width: 100%; }
+
+/* ===== DESIGN TOKENS ===== */
+:root {
+  --bg: #FFF7F5;
+  --text: #292525;
+  --muted: #8C7F7F;
+  --accent: #C9828D;
+  --card: #FFFFFF;
+  --champagne: #E7C9A5;
+  --dark-bg: #1E1715;
+  --dark-text: #F5EDE6;
+  --serif: 'Cormorant Garamond', 'Playfair Display', 'Georgia', serif;
+  --sans: 'Inter', 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --caveat: 'Caveat', cursive;
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* ===== GRAIN OVERLAY ===== */
+#grain {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 9998; opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+}
+@keyframes grainShift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-2px, 3px); }
+  50% { transform: translate(3px, -1px); }
+  75% { transform: translate(-1px, -3px); }
+}
+#grain { animation: grainShift 0.5s steps(1) infinite; }
+
+/* ===== PARTICLES ===== */
+#particles {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 9997;
+}
+.particle {
+  position: absolute;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  animation: particleFloat linear infinite;
+}
+@keyframes particleFloat {
+  0% { opacity: 0; transform: translateY(100vh) scale(0.5); }
+  10% { opacity: 0.3; }
+  90% { opacity: 0.15; }
+  100% { opacity: 0; transform: translateY(-20px) scale(1); }
+}
+
+#muteBtn {
+  position: fixed; top: max(16px, env(safe-area-inset-top, 16px)); right: 16px;
+  z-index: 10000;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,247,245,0.3);
+  background: #1E1715;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.4s var(--ease), transform 0.3s var(--ease);
+  opacity: 0;
+  pointer-events: none;
+}
+#muteBtn::after {
+  content: '';
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #1E1715;
+}
+#muteBtn.visible { opacity: 1; pointer-events: auto; }
+#muteBtn.playing { animation: spinDisc 4s linear infinite; }
+@keyframes spinDisc { 100% { transform: rotate(360deg); } }
+#muteBtn:active { transform: scale(0.92); }
+
+/* ===== LAYOUT ===== */
+.screen {
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px;
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+.screen.active { opacity: 1; transform: translateY(0); }
+.screen.exit-up { opacity: 0; transform: translateY(-40px); }
+.content-col {
+  max-width: 480px; width: 100%; margin: 0 auto;
+  text-align: center;
+}
+
+/* Full-page screens (opening, datelock, correct, honesty) */
+.fullscreen {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100dvh;
+  z-index: 100;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+.fullscreen.active { opacity: 1; pointer-events: auto; }
+.fullscreen.exit-up { opacity: 0; transform: translateY(-50px); pointer-events: none; }
+
+/* ===== SCROLLABLE FLOW ===== */
+#scrollFlow {
+  display: none;
+}
+#scrollFlow.active { display: block; }
+
+/* ===== TYPOGRAPHY ===== */
+.serif { font-family: var(--serif); }
+.sans { font-family: var(--sans); }
+.caveat { font-family: var(--caveat); }
+.muted { color: var(--muted); }
+.accent { color: var(--accent); }
+
+h1, h2 { font-family: var(--serif); font-weight: 400; }
+h1 { font-size: clamp(2rem, 7vw, 3rem); letter-spacing: -0.02em; line-height: 1.2; }
+h2 { font-size: clamp(1.5rem, 5vw, 2rem); letter-spacing: -0.01em; line-height: 1.3; margin-bottom: 1rem; }
+p { font-size: 0.95rem; line-height: 1.7; }
+.small { font-size: 0.8rem; }
+.tiny { font-size: 0.7rem; }
+
+/* ===== ANIMATIONS ===== */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.7s var(--ease) forwards;
+}
+@keyframes fadeIn { to { opacity: 1; } }
+
+.slide-up {
+  opacity: 0; transform: translateY(30px);
+  animation: slideUp 0.7s var(--ease) forwards;
+}
+@keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+.scale-in {
+  opacity: 0; transform: scale(0.95);
+  animation: scaleIn 0.6s var(--ease) forwards;
+}
+@keyframes scaleIn { to { opacity: 1; transform: scale(1); } }
+
+.reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* Delay utilities */
+.d1 { animation-delay: 0.5s; }
+.d2 { animation-delay: 1s; }
+.d3 { animation-delay: 1.5s; }
+.d4 { animation-delay: 2s; }
+.d5 { animation-delay: 2.5s; }
+.d6 { animation-delay: 3s; }
+.d7 { animation-delay: 3.5s; }
+.d8 { animation-delay: 4s; }
+
+/* ===== prefers-reduced-motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  #grain { animation: none; }
+  .particle { animation: none; display: none; }
+}
+
+/* ===== SCREEN 1: OPENING ===== */
+#opening .line { opacity: 0; margin-bottom: 0.8rem; }
+#opening .line.show { animation: fadeIn 0.8s var(--ease) forwards; }
+#opening .begin-btn {
+  opacity: 0;
+  margin-top: 2rem;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--accent);
+  background: none;
+  border: 1.5px solid var(--accent);
+  border-radius: 100px;
+  padding: 14px 36px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.3s, color 0.3s, transform 0.2s;
+  min-height: 56px;
+}
+#opening .begin-btn.show { animation: fadeIn 0.8s var(--ease) forwards; }
+#opening .begin-btn:hover { background: var(--accent); color: #fff; }
+#opening .begin-btn:active { transform: scale(0.96); }
+
+/* ===== SCREEN 2: DATE LOCK ===== */
+#datelock { background: var(--bg); }
+#datelock .dl-small { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+#datelock .dl-heading { font-family: var(--serif); font-size: clamp(1.6rem, 5vw, 2.2rem); margin-bottom: 0.4rem; }
+#datelock .dl-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 2rem; }
+
+.date-slots {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; margin-bottom: 0.6rem; font-size: 1.3rem; letter-spacing: 2px;
+}
+.date-slots .group { display: flex; gap: 6px; }
+.date-slots .sep { color: var(--muted); font-size: 0.9rem; margin: 0 4px; opacity: 0.5; }
+.slot {
+  width: 28px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; color: var(--muted);
+  position: relative;
+}
+.slot.filled { color: var(--text); }
+.slot.active-slot::after {
+  content: '';
+  position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+  width: 14px; height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: cursorBlink 1s ease-in-out infinite;
+}
+@keyframes cursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.dd-mm-label {
+  font-size: 0.65rem; color: var(--muted); letter-spacing: 3px;
+  text-transform: uppercase; margin-bottom: 2rem; opacity: 0.6;
+  transition: opacity 0.4s;
+}
+.dd-mm-label.hidden { opacity: 0; }
+
+/* Keypad */
+.keypad {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 12px; max-width: 260px; margin: 0 auto;
+}
+.key {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(201,130,141,0.08);
+  color: var(--accent);
+  font-family: var(--sans);
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(201,130,141,0.08);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  justify-self: center;
+}
+.key:active { transform: scale(0.94); background: rgba(201,130,141,0.15); }
+.key.empty { visibility: hidden; pointer-events: none; }
+.key.backspace { font-size: 1.1rem; color: var(--muted); }
+
+/* Shake animation */
+@keyframes keypadShake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(6px); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(5px); }
+  75% { transform: translateX(-3px); }
+  90% { transform: translateX(3px); }
+}
+.shake { animation: keypadShake 0.5s ease-out; }
+
+.dl-feedback {
+  margin-top: 1.5rem; min-height: 3rem;
+  font-size: 0.85rem; color: var(--muted);
+  opacity: 0; transition: opacity 0.5s;
+}
+.dl-feedback.show { opacity: 1; }
+.dl-feedback .hint { font-size: 0.78rem; margin-top: 0.4rem; font-style: italic; }
+
+/* ===== SCREEN 3: CORRECT ===== */
+#correct { background: var(--bg); }
+#correct .line { opacity: 0; font-family: var(--serif); font-size: clamp(1.2rem, 4vw, 1.6rem); margin-bottom: 0.6rem; color: var(--text); }
+#correct .line.show { animation: fadeIn 0.9s var(--ease) forwards; }
+
+/* ===== SCREEN 4: REVEAL ===== */
+.sec-reveal {
+  min-height: 100dvh; display: flex; align-items: center; justify-content: center;
+  padding: 24px; position: relative; overflow: hidden;
+}
+.sec-reveal .content-col > * { opacity: 0; }
+.sec-reveal .content-col > .anim { animation: fadeIn 0.8s var(--ease) forwards; }
+.sec-reveal h1 { font-weight: 300; margin-bottom: 0.3rem; }
+.sec-reveal .her-name {
+  font-family: var(--serif); font-size: clamp(1.8rem, 6vw, 2.6rem);
+  font-weight: 400; color: var(--accent); margin-bottom: 1.5rem;
+  cursor: default; user-select: none;
+}
+.sec-reveal .msg { font-size: 0.9rem; color: var(--muted); line-height: 1.8; margin-bottom: 1rem; }
+.drawn-line {
+  width: 60px; height: 1.5px; background: var(--champagne);
+  margin: 1.5rem auto; transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 1s var(--ease);
+}
+.drawn-line.draw { transform: scaleX(1); }
+.sec-reveal .msg2 { font-size: 0.9rem; color: var(--muted); line-height: 1.8; margin-bottom: 1rem; }
+.heart-symbol { font-size: 1rem; color: var(--accent); opacity: 0.6; }
+.scroll-cue {
+  position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+  font-size: 0.7rem; color: var(--muted); letter-spacing: 2px;
+  text-transform: uppercase; opacity: 0;
+  animation: fadeIn 0.8s var(--ease) 4s forwards, scrollCueBob 2s ease-in-out 4s infinite;
+}
+@keyframes scrollCueBob { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
+
+/* Floating hearts / petals */
+.float-heart {
+  position: absolute; font-size: 0.7rem; color: var(--accent); opacity: 0;
+  pointer-events: none;
+  animation: floatHeart linear forwards;
+}
+@keyframes floatHeart {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg) scale(0.6); }
+  15% { opacity: 0.25; }
+  85% { opacity: 0.1; }
+  100% { opacity: 0; transform: translateY(-300px) rotate(25deg) scale(1); }
+}
+
+/* ===== SECTION: WHY THIS ===== */
+.sec-whythis { padding: 80px 24px; }
+.sec-whythis h2 { font-weight: 300; margin-bottom: 2rem; }
+.why-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 28px 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(41,37,37,0.04);
+  font-size: 0.9rem;
+  color: var(--text);
+  line-height: 1.8;
+  max-width: 400px;
+  margin-left: auto; margin-right: auto;
+}
+
+/* ===== SECTION: MEMORIES ===== */
+.sec-memories { padding: 80px 24px; }
+.sec-memories h2 { font-weight: 300; margin-bottom: 0.4rem; }
+.sec-memories .subtitle { font-size: 0.85rem; color: var(--muted); line-height: 1.7; margin-bottom: 3rem; }
+
+.timeline {
+  position: relative;
+  max-width: 400px; margin: 0 auto;
+  padding-left: 28px;
+}
+.timeline::before {
+  content: '';
+  position: absolute; left: 8px; top: 0; bottom: 0;
+  width: 1.5px; background: var(--champagne); opacity: 0.5;
+}
+.memory-item {
+  position: relative;
+  margin-bottom: 3rem;
+  padding-left: 20px;
+}
+.memory-item::before {
+  content: '';
+  position: absolute; left: -24px; top: 6px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--champagne);
+}
+.memory-date {
+  font-size: 0.72rem; color: var(--muted); letter-spacing: 1.5px;
+  text-transform: uppercase; margin-bottom: 0.5rem;
+}
+.memory-photo {
+  width: 100%; aspect-ratio: 4/3;
+  border-radius: 12px;
+  margin-bottom: 0.7rem;
+  position: relative;
+  transition: transform 0.3s var(--ease), z-index 0.3s var(--ease);
+  z-index: 1;
+}
+.memory-photo:hover {
+  transform: scale(1.6);
+  z-index: 1000;
+}
+.memory-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.memory-photo .placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; color: var(--muted);
+  background: linear-gradient(135deg, #F5E6E0 0%, #F0DDD4 40%, #E7C9A5 100%);
+}
+.memory-text { font-size: 0.88rem; color: var(--text); line-height: 1.7; margin-bottom: 0.3rem; }
+.memory-caption { font-family: var(--caveat); font-size: 1rem; color: var(--muted); }
+
+/* Hidden heart */
+.hidden-heart {
+  display: inline-block;
+  font-size: 0.6rem;
+  color: var(--accent);
+  opacity: 0.25;
+  cursor: pointer;
+  animation: gentlePulse 3s ease-in-out infinite;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+@keyframes gentlePulse { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 0.35; transform: scale(1.1); } }
+
+/* ===== HIDDEN DISCOVERY ===== */
+#hiddenOverlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
+  background: rgba(255,247,245,0.97);
+  z-index: 200;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.8s var(--ease);
+}
+#hiddenOverlay.active { opacity: 1; pointer-events: auto; }
+#hiddenOverlay .line { opacity: 0; font-size: 0.9rem; color: var(--muted); margin-bottom: 0.6rem; line-height: 1.7; }
+#hiddenOverlay .line.show { animation: fadeIn 0.8s var(--ease) forwards; }
+#hiddenOverlay .continue-btn {
+  opacity: 0; margin-top: 2rem;
+  font-family: var(--sans); font-size: 0.85rem; color: var(--accent);
+  background: none; border: 1.5px solid var(--accent);
+  border-radius: 100px; padding: 12px 32px; cursor: pointer;
+  transition: background 0.3s, color 0.3s, transform 0.2s;
+  min-height: 56px;
+}
+#hiddenOverlay .continue-btn.show { animation: fadeIn 0.7s var(--ease) forwards; }
+#hiddenOverlay .continue-btn:hover { background: var(--accent); color: #fff; }
+#hiddenOverlay .continue-btn:active { transform: scale(0.96); }
+
+/* ===== SECTION: HONESTY ===== */
+#honesty {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
+  background: var(--bg);
+  z-index: 150;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.8s var(--ease);
+}
+#honesty.active { opacity: 1; pointer-events: auto; }
+#honesty .h-title {
+  font-family: var(--serif); font-size: clamp(1.3rem, 4vw, 1.8rem);
+  font-weight: 300; margin-bottom: 2.5rem; opacity: 0;
+}
+#honesty .h-title.show { animation: fadeIn 0.8s var(--ease) forwards; }
+#honesty .h-line {
+  font-size: 0.95rem; color: var(--text); line-height: 1.8;
+  opacity: 0; position: absolute;
+  max-width: 340px; text-align: center;
+  transition: opacity 0.8s var(--ease);
+}
+#honesty .h-line.show { opacity: 1; }
+
+/* ===== SECTION: LETTER ===== */
+.sec-letter { padding: 80px 24px; }
+.letter-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 36px 28px;
+  max-width: 420px;
+  margin: 0 auto;
+  box-shadow: 0 8px 40px rgba(41,37,37,0.06);
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+.letter-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--champagne), var(--accent), var(--champagne));
+  opacity: 0.4;
+}
+.letter-card .dear {
+  font-family: var(--caveat); font-size: 1.3rem; color: var(--text);
+  margin-bottom: 1.2rem;
+}
+.letter-card .letter-body {
+  font-size: 0.88rem; color: var(--text); line-height: 1.9;
+  white-space: pre-line;
+}
+.letter-card .letter-closing {
+  font-size: 0.88rem; color: var(--text); line-height: 1.9;
+  margin-top: 1.2rem; white-space: pre-line;
+}
+.letter-card .letter-sign {
+  font-family: var(--caveat); font-size: 1.2rem; color: var(--accent);
+  margin-top: 1.5rem;
+}
+
+/* ===== SECTION: MUSIC ===== */
+.sec-music {
+  padding: 80px 24px;
+  min-height: 60dvh;
+  display: flex; align-items: center; justify-content: center;
+}
+.sec-music .msg { font-size: 0.95rem; color: var(--muted); margin-bottom: 1.5rem; }
+.play-btn {
+  font-family: var(--sans); font-size: 0.95rem; font-weight: 400;
+  color: var(--accent);
+  background: none;
+  border: 1.5px solid var(--accent);
+  border-radius: 100px;
+  padding: 16px 40px;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s, transform 0.2s;
+  min-height: 56px;
+  letter-spacing: 0.03em;
+}
+.play-btn:hover { background: var(--accent); color: #fff; }
+.play-btn:active { transform: scale(0.96); }
+
+/* ===== SECTION: GALLERY ===== */
+.sec-gallery { padding: 60px 0; overflow: hidden; }
+.sec-gallery h2 { padding: 0 24px; font-weight: 300; margin-bottom: 2rem; }
+.scrapbook {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 24px 40px;
+  scrollbar-width: none;
+}
+.scrapbook::-webkit-scrollbar { display: none; }
+.scrap-item {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  position: relative;
+}
+.scrap-item.polaroid {
+  background: #fff;
+  padding: 10px 10px 36px;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(41,37,37,0.08);
+}
+.scrap-item.polaroid .scrap-caption {
+  position: absolute; bottom: 8px; left: 0; right: 0;
+  text-align: center;
+  font-family: var(--caveat); font-size: 0.9rem; color: var(--muted);
+}
+.scrap-item.plain {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(41,37,37,0.06);
+}
+.scrap-item img, .scrap-item .placeholder {
+  display: block;
+  object-fit: cover;
+}
+.scrap-item .placeholder {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; color: var(--muted);
+  background: linear-gradient(135deg, #F5E6E0 0%, #F0DDD4 40%, #E7C9A5 100%);
+}
+/* Tape decoration */
+.tape {
+  position: absolute; z-index: 2;
+  width: 50px; height: 16px;
+  background: rgba(231,201,165,0.45);
+  border-radius: 2px;
+}
+.tape-tl { top: -6px; left: 12px; transform: rotate(-6deg); }
+.tape-tr { top: -6px; right: 12px; transform: rotate(4deg); }
+
+/* ===== SECTION: FOR THIS YEAR (dark) ===== */
+.sec-foryear {
+  background: var(--dark-bg);
+  color: var(--dark-text);
+  padding: 100px 24px;
+  min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+}
+.sec-foryear h2 {
+  color: var(--dark-text);
+  font-weight: 300;
+  margin-bottom: 2.5rem;
+}
+.sec-foryear .wish {
+  font-size: 0.93rem;
+  line-height: 1.9;
+  margin-bottom: 1.5rem;
+  color: rgba(245,237,230,0.85);
+}
+.sec-foryear .wish-final {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  line-height: 1.9;
+  color: rgba(245,237,230,0.65);
+  font-style: italic;
+}
+
+/* ===== SECTION: FINAL ===== */
+.sec-final {
+  background: var(--dark-bg);
+  color: var(--dark-text);
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px;
+  position: relative;
+}
+.sec-final .quote {
+  font-family: var(--serif); font-size: clamp(0.95rem, 3.5vw, 1.15rem);
+  font-weight: 300; line-height: 1.9;
+  color: rgba(245,237,230,0.75);
+  max-width: 360px; text-align: center;
+  margin-bottom: 3rem;
+}
+.sec-final .final-hb {
+  font-family: var(--serif);
+  font-size: clamp(1.2rem, 4vw, 1.6rem);
+  font-weight: 400;
+  color: var(--dark-text);
+  margin-bottom: 0.4rem;
+}
+.sec-final .final-sign {
+  font-family: var(--caveat);
+  font-size: 1rem;
+  color: rgba(245,237,230,0.5);
+}
+.sec-final .ps-area {
+  position: absolute; bottom: 30px; left: 0; right: 0;
+  text-align: center; opacity: 0;
+  transition: opacity 1s var(--ease);
+}
+.sec-final .ps-area.show { opacity: 1; }
+.sec-final .ps-text { font-size: 0.72rem; color: rgba(245,237,230,0.35); margin-bottom: 0.6rem; }
+.sec-final .replay-btn {
+  font-family: var(--sans); font-size: 0.78rem;
+  color: rgba(245,237,230,0.4);
+  background: none; border: 1px solid rgba(245,237,230,0.15);
+  border-radius: 100px; padding: 10px 24px;
+  cursor: pointer;
+  transition: color 0.3s, border-color 0.3s;
+  min-height: 44px;
+}
+.sec-final .replay-btn:hover { color: rgba(245,237,230,0.7); border-color: rgba(245,237,230,0.3); }
+
+/* Easter egg footer */
+.easter-footer {
+  font-size: 0.6rem;
+  color: rgba(245,237,230,0.12);
+  position: absolute;
+  bottom: 10px; left: 0; right: 0;
+  text-align: center;
+  user-select: none;
+}
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: rgba(41,37,37,0.9); color: #F5EDE6;
+  font-size: 0.8rem; padding: 12px 24px;
+  border-radius: 100px;
+  z-index: 10001;
+  opacity: 0;
+  transition: opacity 0.5s, transform 0.5s;
+  pointer-events: none;
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.5;
+  backdrop-filter: blur(8px);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== DESKTOP ===== */
+@media (min-width: 600px) {
+  .content-col { max-width: 480px; }
+  .sec-reveal .content-col, .sec-whythis .content-col,
+  .sec-memories .content-col, .sec-letter .content-col,
+  .sec-music .content-col, .sec-foryear .content-col,
+  .sec-final .content-col { max-width: 520px; }
+  .letter-card { padding: 48px 40px; }
+  .scrapbook { padding: 20px 60px 40px; }
+}
+@media (min-width: 900px) {
+  .sec-foryear .content-col, .sec-final .content-col { max-width: 600px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Grain Overlay -->
+<div id="grain"></div>
+
+<!-- Particles Container -->
+<div id="particles"></div>
+
+<!-- Mute Button -->
+<button id="muteBtn" aria-label="Toggle music">
+  <svg id="muteIcon" viewBox="0 0 24 24">
+    <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+    <path id="soundWave1" d="M15.54 8.46a5 5 0 010 7.07"/>
+    <path id="soundWave2" d="M19.07 4.93a10 10 0 010 14.14"/>
+  </svg>
+</button>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Audio -->
+<audio id="bgMusic" preload="none" loop></audio>
+
+<!-- ===== SCREEN 1: OPENING ===== -->
+<div id="opening" class="fullscreen active">
+  <div class="content-col">
+    <p class="line serif" style="font-size:clamp(1.1rem,3.5vw,1.4rem); color:var(--text);" id="openLine1">I made something for you.</p>
+    <p class="line" style="font-size:0.9rem; color:var(--muted); line-height:1.7;" id="openLine2">But there's one little thing<br>you have to figure out first.</p>
+    <button class="begin-btn" id="beginBtn">Begin →</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 2: DATE LOCK ===== -->
+<div id="datelock" class="fullscreen">
+  <div class="content-col">
+    <p class="dl-small fade-in">A date.</p>
+    <h2 class="dl-heading fade-in d1">Can you remember it?</h2>
+    <p class="dl-sub fade-in d2">It's somewhere in our story.</p>
+
+    <div class="date-slots" id="dateSlots">
+      <div class="group" id="dayGroup">
+        <div class="slot" data-i="0">○</div>
+        <div class="slot" data-i="1">○</div>
+      </div>
+      <span class="sep">/</span>
+      <div class="group" id="monthGroup">
+        <div class="slot" data-i="2">○</div>
+        <div class="slot" data-i="3">○</div>
+      </div>
+      <span class="sep">/</span>
+      <div class="group" id="yearGroup">
+        <div class="slot" data-i="4">○</div>
+        <div class="slot" data-i="5">○</div>
+        <div class="slot" data-i="6">○</div>
+        <div class="slot" data-i="7">○</div>
+      </div>
+    </div>
+    <div class="dd-mm-label" id="ddmmLabel">DD / MM / YYYY</div>
+
+    <div class="keypad" id="keypad">
+      <button class="key" data-val="1">1</button>
+      <button class="key" data-val="2">2</button>
+      <button class="key" data-val="3">3</button>
+      <button class="key" data-val="4">4</button>
+      <button class="key" data-val="5">5</button>
+      <button class="key" data-val="6">6</button>
+      <button class="key" data-val="7">7</button>
+      <button class="key" data-val="8">8</button>
+      <button class="key" data-val="9">9</button>
+      <button class="key empty"></button>
+      <button class="key" data-val="0">0</button>
+      <button class="key backspace" data-val="back">←</button>
+    </div>
+
+    <div class="dl-feedback" id="dlFeedback">
+      <p id="feedbackText"></p>
+      <p class="hint" id="feedbackHint"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 3: CORRECT ===== -->
+<div id="correct" class="fullscreen">
+  <div class="content-col">
+    <p class="line serif" id="correctLine1">You remembered.</p>
+    <p class="line serif" id="correctLine2" style="color:var(--muted); font-size:clamp(1rem,3vw,1.2rem);">Or maybe I knew you would.</p>
+  </div>
+</div>
+
+<!-- ===== SCROLLABLE FLOW (screens 4-14) ===== -->
+<div id="scrollFlow">
+
+  <!-- SCREEN 4: REVEAL -->
+  <section class="sec-reveal" id="revealSection">
+    <div class="content-col">
+      <h1 class="serif" id="revealTitle">Happy Birthday.</h1>
+      <p class="her-name" id="herNameEl"></p>
+      <p class="msg" id="revealMsg1">Today is about you.<br>Nothing complicated.<br>Nothing you have to give back.</p>
+      <div class="drawn-line" id="drawnLine"></div>
+      <p class="msg2" id="revealMsg2">Just a little reminder<br>that you deserve a beautiful year ahead.</p>
+      <p class="heart-symbol" id="revealHeart">♡</p>
+    </div>
+    <div class="scroll-cue" id="scrollCue">scroll ↓</div>
+  </section>
+
+  <!-- SCREEN 5: WHY THIS -->
+  <section class="sec-whythis" id="whythisSection">
+    <div class="content-col">
+      <h2 class="reveal">Why this?</h2>
+      <div class="why-card reveal">Because ordinary birthday wishes<br>felt a little too ordinary.</div>
+      <div class="why-card reveal">Because some people become<br>part of your memories without trying.</div>
+      <div class="why-card reveal">And because I wanted to give you<br>something you could keep.</div>
+    </div>
+  </section>
+
+  <!-- SCREEN 6: MEMORIES -->
+  <section class="sec-memories" id="memoriesSection">
+    <div class="content-col">
+      <h2 class="reveal">Little Things</h2>
+      <p class="subtitle reveal">Some things are small.<br>Somehow, they stay.</p>
+      <div class="timeline" id="timeline"></div>
+    </div>
+  </section>
+
+  <!-- SCREEN 9: LETTER -->
+  <section class="sec-letter" id="letterSection">
+    <div class="content-col">
+      <div class="letter-card reveal">
+        <p class="dear" id="letterDear"></p>
+        <div class="letter-body" id="letterBody"></div>
+        <div class="letter-closing" id="letterClosing"></div>
+        <p class="letter-sign" id="letterSign"></p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- SCREEN 11: GALLERY -->
+  <section class="sec-gallery" id="gallerySection">
+    <div class="content-col" style="max-width:none;">
+      <h2 class="reveal" style="text-align:center;">Moments</h2>
+      <div class="scrapbook" id="scrapbook"></div>
+    </div>
+  </section>
+
+  <!-- SCREEN 12: FOR THIS YEAR -->
+  <section class="sec-foryear" id="foryearSection">
+    <div class="content-col">
+      <h2 class="reveal">For this year...</h2>
+      <p class="wish reveal">I hope you laugh until your stomach hurts.</p>
+      <p class="wish reveal">I hope you travel somewhere<br>you've never been.</p>
+      <p class="wish reveal">I hope you meet people<br>who make life feel lighter.</p>
+      <p class="wish reveal">I hope you become someone<br>your younger self would feel safe with.</p>
+      <p class="wish-final reveal">And whenever life gets difficult,<br>I hope you remember that difficult<br>doesn't mean forever.</p>
+    </div>
+  </section>
+
+  <!-- SCREEN 13: FINAL -->
+  <section class="sec-final" id="finalSection">
+    <div class="content-col">
+      <p class="quote reveal">Some people are chapters.<br>Some become memories.<br>And some simply leave the story<br>a little more beautiful.</p>
+      <p class="final-hb serif reveal" id="finalHB"></p>
+      <p class="final-sign reveal" id="finalSign"></p>
+    </div>
+    <div class="ps-area" id="psArea">
+      <p class="ps-text">P.S. You can start over.</p>
+      <button class="replay-btn" id="replayBtn">↻ Replay</button>
+    </div>
+    <p class="easter-footer">Made with more time than I care to admit.</p>
+  </section>
+</div>
+
+<!-- Hidden Overlay -->
+<div id="hiddenOverlay">
+  <div class="content-col">
+    <p class="line" id="hiddenLine1">You found one.</p>
+    <p class="line" id="hiddenLine2" style="line-height:1.8;">There are a few things<br>I never really said.</p>
+    <button class="continue-btn" id="hiddenContinue">Continue →</button>
+  </div>
+</div>
+
+<!-- Honesty Screen -->
+<div id="honesty">
+  <div class="content-col" style="position:relative; min-height:120px;">
+    <p class="h-title serif" id="honestyTitle">A little honesty.</p>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — Edit all content here
+   ============================================================ */
+const CONFIG = {
+  herName: 'Ria Jha',
+  yourName: 'Kutta',
+  secretDates: ['20092005'],   // DDMMYYYY format, array allows multiple valid dates
+  hint: 'Think about where our story began.',
+
+  memories: [
+    {
+      photo: 'WhatsApp Image 2026-09-20 at 00.50.52 (1).jpeg'
+    },
+    {
+      photo: 'WhatsApp Image 2026-09-20 at 00.47.16.jpeg'
+    },
+    {
+      photo: 'rge.jpeg'
+    },
+    {
+      photo: 'heejt.jpeg',
+      hasHiddenHeart: true  // This memory contains the hidden ♡
+    },
+    {
+      photo: 'thtrjr.jpeg'
+    },
+    {
+      photo: 'WhatsApp Image 2026-09-20 at 00.47.16 (1).jpeg'
+    }
+  ],
+
+  letterBody: `I wanted to give you something a little different this year. Not a forwarded message, not a paragraph copied from somewhere — just something that took a bit of time and thought, because you deserve at least that much.
+
+I don't always say this kind of stuff out loud. Honestly, I'm not great at it. But birthdays feel like a good excuse to be a little more honest than usual.
+
+You're one of those people who make things lighter just by being around. You probably don't notice it, but you do. The way you laugh, the way you listen, the way you show up — it doesn't go unnoticed. At least not by me.
+
+I'm not trying to make this heavy. I just think you should hear it from someone, and I figured — why not me, and why not today.
+
+You don't have to reply to this with anything profound. You don't have to say anything back at all. This isn't that kind of gift. It's just a reminder that someone out here thinks you're pretty remarkable, and wanted you to know.
+
+So here's to another year of you being you — which, for the record, is already more than enough.`,
+
+  musicPath: 'Kidult.mp3',
+
+  galleryPhotos: [
+    { photo: 'WhatsApp Image 2026-09-20 at 00.47.17 (1).jpeg', caption: 'That day.', style: 'polaroid', width: 200, height: 260, rotation: -3 },
+    { photo: 'WhatsApp Image 2026-09-20 at 00.47.17.jpeg', caption: '', style: 'plain', width: 260, height: 180, rotation: 2 },
+    { photo: 'WhatsApp Image 2026-09-20 at 00.50.52.jpeg', caption: 'Remember this?', style: 'polaroid', width: 180, height: 240, rotation: -2 },
+    { photo: 'WhatsApp Image 2026-09-20 at 00.50.53 (2).jpeg', caption: '', style: 'plain', width: 300, height: 200, rotation: 1 },
+    { photo: 'WhatsApp Image 2026-09-20 at 00.50.53.jpeg', caption: 'Always.', style: 'polaroid', width: 160, height: 220, rotation: 4 },
+    { photo: 'WhatsApp Image 2026-09-20 at 00.50.54.jpeg', caption: '', style: 'plain', width: 240, height: 160, rotation: -1 },
+    { photo: 'WhatsApp Image 2026-09-20 at 00.50.55 (1).jpeg', caption: 'This one.', style: 'polaroid', width: 200, height: 260, rotation: -4 },
+    { photo: 'WhatsApp Image 2026-09-20 at 00.50.55.jpeg', caption: '', style: 'plain', width: 280, height: 190, rotation: 3 },
+    { photo: 'dgdh.jpeg', caption: 'Us.', style: 'polaroid', width: 190, height: 250, rotation: -2 },
+    { photo: 'tjhrtj.jpeg', caption: '', style: 'plain', width: 220, height: 160, rotation: 2 },
+    { photo: 'My Pinterest is being weird btw].jpg', caption: '♡', style: 'polaroid', width: 170, height: 230, rotation: -3 }
+  ],
+
+  honestyLines: [
+    "I don't know where life\nwill take either of us.",
+    "I don't know what the future\nis supposed to look like.",
+    "And I don't want this birthday\nto come with expectations.",
+    null, // pause
+    "I just hope you're happy.",
+    null, // pause
+    "Really happy."
+  ]
+};
+
+
+/* ============================================================
+   PARTICLES MODULE
+   ============================================================ */
+const Particles = (() => {
+  const container = document.getElementById('particles');
+  let count = 8;
+
+  function create() {
+    container.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (12 + Math.random() * 18) + 's';
+      p.style.animationDelay = (Math.random() * 15) + 's';
+      p.style.width = (2 + Math.random() * 2) + 'px';
+      p.style.height = p.style.width;
+      container.appendChild(p);
+    }
+  }
+
+  function enrich() {
+    count = 16;
+    create();
+  }
+
+  function reset() {
+    count = 8;
+    create();
+  }
+
+  return { create, enrich, reset };
+})();
+
+
+/* ============================================================
+   MUSIC MODULE
+   ============================================================ */
+const Music = (() => {
+  const audio = document.getElementById('bgMusic');
+  const muteBtn = document.getElementById('muteBtn');
+  const icon = document.getElementById('muteIcon');
+  const wave1 = document.getElementById('soundWave1');
+  const wave2 = document.getElementById('soundWave2');
+  let isPlaying = false;
+  let isMuted = false;
+  let fadeInterval = null;
+
+  function init() {
+    if (CONFIG.musicPath) {
+      audio.src = CONFIG.musicPath;
+    }
+    muteBtn.addEventListener('click', toggle);
+  }
+
+  function showBtn() {
+    muteBtn.classList.add('visible');
+  }
+
+  function hideBtn() {
+    muteBtn.classList.remove('visible');
+  }
+
+  function updateIcon() {
+    if (isMuted || !isPlaying) {
+      muteBtn.classList.remove('playing');
+    } else {
+      muteBtn.classList.add('playing');
+    }
+  }
+
+  function play() {
+    if (!CONFIG.musicPath && !audio.src) return;
+    try {
+      audio.volume = 0;
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {});
+      isPlaying = true;
+      isMuted = false;
+      showBtn();
+      updateIcon();
+      // Fade in
+      clearInterval(fadeInterval);
+      fadeInterval = setInterval(() => {
+        if (audio.volume < 0.85) {
+          audio.volume = Math.min(audio.volume + 0.02, 0.85);
+        } else {
+          clearInterval(fadeInterval);
+        }
+      }, 50);
+    } catch(e) {}
+  }
+
+  function stop() {
+    try {
+      clearInterval(fadeInterval);
+      audio.pause();
+      audio.currentTime = 0;
+      isPlaying = false;
+      isMuted = false;
+      hideBtn();
+      updateIcon();
+    } catch(e) {}
+  }
+
+  function toggle() {
+    if (!isPlaying) return;
+    if (isMuted) {
+      audio.volume = 0.85;
+      isMuted = false;
+    } else {
+      audio.volume = 0;
+      isMuted = true;
+    }
+    updateIcon();
+  }
+
+  return { init, play, stop, showBtn, hideBtn };
+})();
+
+
+/* ============================================================
+   TOAST MODULE
+   ============================================================ */
+const Toast = (() => {
+  const el = document.getElementById('toast');
+  let timeout = null;
+
+  function show(msg, duration = 3000) {
+    clearTimeout(timeout);
+    el.innerHTML = msg;
+    el.classList.add('show');
+    timeout = setTimeout(() => el.classList.remove('show'), duration);
+  }
+
+  return { show };
+})();
+
+
+/* ============================================================
+   KEYPAD MODULE
+   ============================================================ */
+const Keypad = (() => {
+  const slots = document.querySelectorAll('#dateSlots .slot');
+  const keypad = document.getElementById('keypad');
+  const keys = keypad.querySelectorAll('.key');
+  const feedback = document.getElementById('dlFeedback');
+  const feedbackText = document.getElementById('feedbackText');
+  const feedbackHint = document.getElementById('feedbackHint');
+  const ddmmLabel = document.getElementById('ddmmLabel');
+  let digits = [];
+  let locked = false;
+
+  function init() {
+    keys.forEach(k => {
+      k.addEventListener('click', () => {
+        if (locked) return;
+        const val = k.dataset.val;
+        if (val === 'back') {
+          removeDigit();
+        } else if (val !== undefined) {
+          addDigit(val);
+        }
+      });
+    });
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('datelock').classList.contains('active')) return;
+      if (locked) return;
+      if (e.key >= '0' && e.key <= '9') {
+        addDigit(e.key);
+      } else if (e.key === 'Backspace') {
+        removeDigit();
+      }
+    });
+
+    updateSlots();
+  }
+
+  function addDigit(d) {
+    if (digits.length >= 8) return;
+    digits.push(d);
+    updateSlots();
+    feedback.classList.remove('show');
+
+    if (digits.length === 1) {
+      ddmmLabel.classList.add('hidden');
+    }
+
+    if (digits.length === 8) {
+      locked = true;
+      setTimeout(checkDate, 400);
+    }
+  }
+
+  function removeDigit() {
+    if (digits.length === 0) return;
+    digits.pop();
+    updateSlots();
+    feedback.classList.remove('show');
+    if (digits.length === 0) {
+      ddmmLabel.classList.remove('hidden');
+    }
+  }
+
+  function updateSlots() {
+    slots.forEach((s, i) => {
+      if (i < digits.length) {
+        s.textContent = '●';
+        s.classList.add('filled');
+        s.classList.remove('active-slot');
+      } else if (i === digits.length) {
+        s.textContent = '○';
+        s.classList.remove('filled');
+        s.classList.add('active-slot');
+      } else {
+        s.textContent = '○';
+        s.classList.remove('filled', 'active-slot');
+      }
+    });
+  }
+
+  function checkDate() {
+    const entered = digits.join('');
+    const isCorrect = CONFIG.secretDates.some(d => d === entered);
+
+    if (isCorrect) {
+      App.goTo('correct');
+    } else {
+      // Shake
+      keypad.classList.add('shake');
+      setTimeout(() => keypad.classList.remove('shake'), 600);
+
+      digits = [];
+      updateSlots();
+      ddmmLabel.classList.remove('hidden');
+
+      feedbackText.innerHTML = 'Hmm...<br>Not that one.';
+      feedbackHint.textContent = CONFIG.hint;
+      feedback.classList.add('show');
+
+      setTimeout(() => { locked = false; }, 700);
+    }
+  }
+
+  function reset() {
+    digits = [];
+    locked = false;
+    updateSlots();
+    ddmmLabel.classList.remove('hidden');
+    feedback.classList.remove('show');
+  }
+
+  return { init, reset };
+})();
+
+
+/* ============================================================
+   REVEAL MODULE (floating hearts)
+   ============================================================ */
+const Reveal = (() => {
+  let heartInterval = null;
+
+  function startHearts(container) {
+    heartInterval = setInterval(() => {
+      const h = document.createElement('span');
+      h.className = 'float-heart';
+      h.textContent = ['♡', '✿', '❋'][Math.floor(Math.random() * 3)];
+      h.style.left = (10 + Math.random() * 80) + '%';
+      h.style.bottom = '0';
+      h.style.animationDuration = (6 + Math.random() * 8) + 's';
+      h.style.fontSize = (0.5 + Math.random() * 0.5) + 'rem';
+      container.appendChild(h);
+      setTimeout(() => h.remove(), 15000);
+    }, 1200);
+  }
+
+  function stopHearts() {
+    clearInterval(heartInterval);
+  }
+
+  return { startHearts, stopHearts };
+})();
+
+
+/* ============================================================
+   GALLERY MODULE
+   ============================================================ */
+const Gallery = (() => {
+  function build() {
+    const container = document.getElementById('scrapbook');
+    container.innerHTML = '';
+
+    CONFIG.galleryPhotos.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.className = `scrap-item ${item.style}`;
+      div.style.transform = `rotate(${item.rotation}deg)`;
+
+      const imgEl = document.createElement('div');
+      imgEl.className = 'placeholder';
+      imgEl.style.width = item.width + 'px';
+      imgEl.style.height = item.height + 'px';
+      imgEl.textContent = 'Photo';
+
+      if (item.photo) {
+        const img = document.createElement('img');
+        img.src = item.photo;
+        img.alt = item.caption || 'Memory';
+        img.loading = 'lazy';
+        img.style.width = item.width + 'px';
+        img.style.height = item.height + 'px';
+        div.appendChild(img);
+      } else {
+        div.appendChild(imgEl);
+      }
+
+      if (item.style === 'polaroid' && item.caption) {
+        const cap = document.createElement('span');
+        cap.className = 'scrap-caption';
+        cap.textContent = item.caption;
+        div.appendChild(cap);
+      }
+
+      // Add tape to some
+      if (item.style === 'plain' && i % 3 === 0) {
+        const tape = document.createElement('div');
+        tape.className = 'tape tape-tl';
+        div.appendChild(tape);
+      }
+
+      container.appendChild(div);
+    });
+  }
+
+  return { build };
+})();
+
+
+/* ============================================================
+   MEMORIES MODULE (timeline)
+   ============================================================ */
+const Memories = (() => {
+  function build() {
+    const timeline = document.getElementById('timeline');
+    timeline.innerHTML = '';
+
+    CONFIG.memories.forEach((mem, i) => {
+      const item = document.createElement('div');
+      item.className = 'memory-item reveal';
+
+      let html = `<div class="memory-photo">`;
+      if (mem.photo) {
+        html += `<img src="${mem.photo}" alt="Memory" loading="lazy">`;
+      } else {
+        html += `<div class="placeholder">Photo</div>`;
+      }
+      html += `</div>`;
+      if (mem.hasHiddenHeart) {
+        html += `<p class="memory-text"><span class="hidden-heart" id="hiddenHeartTrigger" role="button" aria-label="hidden">♡</span></p>`;
+      }
+
+      item.innerHTML = html;
+      timeline.appendChild(item);
+    });
+  }
+
+  return { build };
+})();
+
+
+/* ============================================================
+   HONESTY MODULE
+   ============================================================ */
+const Honesty = (() => {
+  const container = document.getElementById('honesty');
+  let lines = [];
+  let currentIndex = 0;
+  let autoTimer = null;
+
+  function init() {
+    // Build lines
+    const col = container.querySelector('.content-col');
+    CONFIG.honestyLines.forEach((line, i) => {
+      if (line === null) return; // pause handled by timing
+      const p = document.createElement('p');
+      p.className = 'h-line';
+      p.innerHTML = line.replace(/\n/g, '<br>');
+      col.appendChild(p);
+      lines.push(p);
+    });
+  }
+
+  function start() {
+    container.classList.add('active');
+    document.body.classList.add('scroll-locked');
+    currentIndex = -1;
+
+    // Show title first
+    const title = document.getElementById('honestyTitle');
+    title.classList.add('show');
+
+    setTimeout(() => {
+      title.style.transition = 'opacity 0.8s';
+      title.style.opacity = '0';
+      setTimeout(() => advanceLine(), 800);
+    }, 1800);
+  }
+
+  function advanceLine() {
+    // Hide current
+    if (currentIndex >= 0 && currentIndex < lines.length) {
+      lines[currentIndex].classList.remove('show');
+    }
+    currentIndex++;
+
+    if (currentIndex >= lines.length) {
+      // Done
+      setTimeout(() => {
+        container.classList.remove('active');
+        document.body.classList.remove('scroll-locked');
+        // Scroll to letter
+        setTimeout(() => {
+          document.getElementById('letterSection').scrollIntoView({ behavior: 'smooth' });
+        }, 300);
+      }, 1000);
+      return;
+    }
+
+    // Map line index to honesty lines (accounting for null pauses)
+    setTimeout(() => {
+      lines[currentIndex].classList.add('show');
+      // Check if next is a pause or auto-advance
+      const isLastMeaningful = currentIndex === lines.length - 1;
+      const delay = isLastMeaningful ? 2500 : 2500;
+      autoTimer = setTimeout(() => advanceLine(), delay);
+    }, currentIndex > 0 ? 400 : 0);
+  }
+
+  function stop() {
+    clearTimeout(autoTimer);
+    container.classList.remove('active');
+    document.body.classList.remove('scroll-locked');
+  }
+
+  // Also advance on tap
+  function handleTap() {
+    if (!container.classList.contains('active')) return;
+    clearTimeout(autoTimer);
+    advanceLine();
+  }
+
+  return { init, start, stop, handleTap };
+})();
+
+
+/* ============================================================
+   SCROLL OBSERVER
+   ============================================================ */
+const ScrollReveal = (() => {
+  let observer = null;
+
+  function init() {
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  }
+
+  function refresh() {
+    if (!observer) init();
+    document.querySelectorAll('.reveal:not(.visible)').forEach(el => observer.observe(el));
+  }
+
+  return { init, refresh };
+})();
+
+
+/* ============================================================
+   EASTER EGGS
+   ============================================================ */
+const EasterEggs = (() => {
+  let nameTaps = 0;
+  let nameTimer = null;
+  let longPressTimer = null;
+
+  function init() {
+    // 1. Triple-tap her name
+    const herNameEl = document.getElementById('herNameEl');
+    herNameEl.addEventListener('click', () => {
+      nameTaps++;
+      clearTimeout(nameTimer);
+      nameTimer = setTimeout(() => { nameTaps = 0; }, 800);
+      if (nameTaps === 3) {
+        Toast.show('Okay okay...<br>You found this.');
+        nameTaps = 0;
+      }
+    });
+
+    // 2. Long press "Happy Birthday."
+    const revealTitle = document.getElementById('revealTitle');
+    revealTitle.addEventListener('pointerdown', (e) => {
+      longPressTimer = setTimeout(() => {
+        Toast.show("You're really investigating this, huh?");
+      }, 1500);
+    });
+    revealTitle.addEventListener('pointerup', () => clearTimeout(longPressTimer));
+    revealTitle.addEventListener('pointerleave', () => clearTimeout(longPressTimer));
+    revealTitle.addEventListener('pointercancel', () => clearTimeout(longPressTimer));
+  }
+
+  return { init };
+})();
+
+
+/* ============================================================
+   APP — State Machine
+   ============================================================ */
+const App = (() => {
+  const screens = {
+    opening: document.getElementById('opening'),
+    datelock: document.getElementById('datelock'),
+    correct: document.getElementById('correct'),
+  };
+  const scrollFlow = document.getElementById('scrollFlow');
+  let currentScreen = 'opening';
+
+  function init() {
+    Particles.create();
+    Music.init();
+    Keypad.init();
+    Honesty.init();
+    Memories.build();
+    Gallery.build();
+    EasterEggs.init();
+
+    // Populate dynamic text
+    document.getElementById('herNameEl').textContent = CONFIG.herName;
+    document.getElementById('letterDear').textContent = `Dear ${CONFIG.herName},`;
+    document.getElementById('letterBody').textContent = CONFIG.letterBody;
+    document.getElementById('letterClosing').textContent =
+      "Whatever this next year brings,\nI hope it gives you reasons to laugh,\nplaces you've never seen,\npeople who make you feel safe,\nand moments you'll want to remember.\n\nTake care of yourself.\nAnd have a beautiful birthday.";
+    document.getElementById('letterSign').textContent = `— ${CONFIG.yourName}`;
+    document.getElementById('finalHB').textContent = `Happy Birthday, ${CONFIG.herName}.`;
+    document.getElementById('finalSign').textContent = `— ${CONFIG.yourName}`;
+
+    // Opening sequence
+    setTimeout(() => {
+      document.getElementById('openLine1').classList.add('show');
+    }, 600);
+    setTimeout(() => {
+      document.getElementById('openLine2').classList.add('show');
+    }, 1600);
+    setTimeout(() => {
+      document.getElementById('beginBtn').classList.add('show');
+    }, 2600);
+
+    // Event listeners
+    document.getElementById('beginBtn').addEventListener('click', () => {
+      Music.play();
+      Particles.enrich();
+      goTo('datelock');
+    });
+    document.getElementById('replayBtn').addEventListener('click', replay);
+
+    // Hidden heart
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'hiddenHeartTrigger') {
+        showHiddenOverlay();
+      }
+    });
+
+    document.getElementById('hiddenContinue').addEventListener('click', () => {
+      document.getElementById('hiddenOverlay').classList.remove('active');
+      document.body.classList.remove('scroll-locked');
+      Honesty.start();
+    });
+
+    // Honesty tap to advance
+    document.getElementById('honesty').addEventListener('click', () => Honesty.handleTap());
+
+    // PS area reveal on final section
+    const finalObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            document.getElementById('psArea').classList.add('show');
+          }, 4000);
+          finalObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    finalObserver.observe(document.getElementById('finalSection'));
+  }
+
+  function goTo(screen) {
+    // Lock scroll during fullscreen modes
+    if (screen === 'datelock') {
+      document.body.classList.add('scroll-locked');
+    }
+
+    // Exit current fullscreen
+    if (screens[currentScreen]) {
+      screens[currentScreen].classList.remove('active');
+      screens[currentScreen].classList.add('exit-up');
+    }
+
+    currentScreen = screen;
+
+    if (screen === 'datelock') {
+      setTimeout(() => {
+        screens.datelock.classList.remove('exit-up');
+        screens.datelock.classList.add('active');
+      }, 400);
+    }
+
+    if (screen === 'correct') {
+      setTimeout(() => {
+        screens.datelock.classList.remove('active');
+        screens.datelock.classList.add('exit-up');
+
+        setTimeout(() => {
+          screens.correct.classList.remove('exit-up');
+          screens.correct.classList.add('active');
+
+          // "You remembered." sequence
+          setTimeout(() => {
+            document.getElementById('correctLine1').classList.add('show');
+          }, 700);
+          setTimeout(() => {
+            document.getElementById('correctLine2').classList.add('show');
+          }, 1800);
+          setTimeout(() => {
+            transitionToReveal();
+          }, 3800);
+        }, 300);
+      }, 200);
+    }
+  }
+
+  function transitionToReveal() {
+    screens.correct.classList.remove('active');
+    screens.correct.classList.add('exit-up');
+    document.body.classList.remove('scroll-locked');
+
+    // Hide all fullscreens
+    setTimeout(() => {
+      Object.values(screens).forEach(s => {
+        s.style.display = 'none';
+      });
+
+      scrollFlow.classList.add('active');
+
+      // Animate reveal content
+      const revealEls = document.querySelectorAll('#revealSection .content-col > *');
+      revealEls.forEach((el, i) => {
+        setTimeout(() => {
+          el.classList.add('anim');
+          el.style.animation = `fadeIn 0.8s var(--ease) forwards`;
+        }, 400 + i * 500);
+      });
+
+      // Draw line
+      setTimeout(() => {
+        document.getElementById('drawnLine').classList.add('draw');
+      }, 2000);
+
+      // Start floating hearts
+      setTimeout(() => {
+        Reveal.startHearts(document.getElementById('revealSection'));
+      }, 2500);
+
+      // Init scroll reveals
+      setTimeout(() => {
+        ScrollReveal.init();
+      }, 500);
+
+    }, 600);
+  }
+
+  function showHiddenOverlay() {
+    const overlay = document.getElementById('hiddenOverlay');
+    overlay.classList.add('active');
+    document.body.classList.add('scroll-locked');
+
+    setTimeout(() => {
+      document.getElementById('hiddenLine1').classList.add('show');
+    }, 500);
+    setTimeout(() => {
+      document.getElementById('hiddenLine2').classList.add('show');
+    }, 1500);
+    setTimeout(() => {
+      document.getElementById('hiddenContinue').classList.add('show');
+    }, 2500);
+  }
+
+  function handlePlay() {
+    Music.play();
+    Particles.enrich();
+
+    const btn = document.getElementById('playBtn');
+    btn.textContent = 'Playing...';
+    btn.style.pointerEvents = 'none';
+    btn.style.opacity = '0.5';
+  }
+
+  function replay() {
+    Music.stop();
+    Reveal.stopHearts();
+    Particles.reset();
+    Honesty.stop();
+
+    // Reset all
+    scrollFlow.classList.remove('active');
+    document.body.classList.remove('scroll-locked');
+
+    Object.values(screens).forEach(s => {
+      s.style.display = '';
+      s.classList.remove('active', 'exit-up');
+    });
+
+    // Reset reveal animations
+    document.querySelectorAll('#revealSection .content-col > *').forEach(el => {
+      el.classList.remove('anim');
+      el.style.animation = '';
+    });
+    document.getElementById('drawnLine').classList.remove('draw');
+
+    // Reset scroll reveals
+    document.querySelectorAll('.reveal').forEach(el => el.classList.remove('visible'));
+
+    // Reset correct screen
+    document.getElementById('correctLine1').classList.remove('show');
+    document.getElementById('correctLine2').classList.remove('show');
+
+    // Reset opening
+    document.getElementById('openLine1').classList.remove('show');
+    document.getElementById('openLine2').classList.remove('show');
+    document.getElementById('beginBtn').classList.remove('show');
+
+    // Reset hidden overlay
+    document.getElementById('hiddenOverlay').classList.remove('active');
+    document.getElementById('hiddenLine1').classList.remove('show');
+    document.getElementById('hiddenLine2').classList.remove('show');
+    document.getElementById('hiddenContinue').classList.remove('show');
+
+    // Reset honesty
+    document.getElementById('honestyTitle').style.opacity = '';
+    document.getElementById('honestyTitle').classList.remove('show');
+
+    // Reset keypad
+    Keypad.reset();
+
+    // Reset music button
+    const playBtn = document.getElementById('playBtn');
+    playBtn.textContent = '▶ Play';
+    playBtn.style.pointerEvents = '';
+    playBtn.style.opacity = '';
+
+    // Reset PS area
+    document.getElementById('psArea').classList.remove('show');
+
+    // Scroll to top
+    window.scrollTo(0, 0);
+
+    // Re-show opening
+    setTimeout(() => {
+      screens.opening.classList.add('active');
+      setTimeout(() => document.getElementById('openLine1').classList.add('show'), 600);
+      setTimeout(() => document.getElementById('openLine2').classList.add('show'), 1600);
+      setTimeout(() => document.getElementById('beginBtn').classList.add('show'), 2600);
+    }, 200);
+  }
+
+  return { init, goTo };
+})();
+
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', App.init);
+</script>
+
+</body>
+</html>
