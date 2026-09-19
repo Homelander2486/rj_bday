@@ -750,6 +750,177 @@ p { font-size: 0.95rem; line-height: 1.7; }
 @media (min-width: 900px) {
   .sec-foryear .content-col, .sec-final .content-col { max-width: 600px; }
 }
+
+/* ===== MINI GAME ===== */
+.sec-minigame {
+  padding: 80px 24px;
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.game-intro { text-align: center; }
+.game-intro h2 { font-weight: 300; margin-bottom: 0.5rem; }
+.game-intro p { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.7; }
+.game-start-btn {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  padding: 14px 36px;
+  border: 1.5px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+  letter-spacing: 0.5px;
+}
+.game-start-btn:hover { background: var(--accent); color: #fff; }
+
+.game-area {
+  position: relative;
+  width: 100%; max-width: 360px;
+  height: 420px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255,247,245,0.5) 0%, rgba(231,201,165,0.15) 100%);
+  border: 1.5px solid rgba(201,130,141,0.15);
+  overflow: hidden;
+  display: none;
+  margin: 0 auto;
+}
+.game-area.active { display: block; }
+
+.game-score {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  font-family: var(--caveat); font-size: 1.1rem; color: var(--accent);
+  z-index: 5;
+}
+.game-petal {
+  position: absolute;
+  font-size: 1.6rem;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  animation: petalFall linear forwards;
+  transition: transform 0.15s ease;
+  z-index: 3;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+.game-petal:active { transform: scale(1.4); }
+@keyframes petalFall {
+  0% { opacity: 0; transform: translateY(-30px) rotate(0deg); }
+  5% { opacity: 1; }
+  100% { opacity: 0.3; transform: translateY(440px) rotate(360deg); }
+}
+.petal-catch {
+  position: absolute;
+  font-size: 1.4rem;
+  pointer-events: none;
+  animation: petalCatchAnim 0.6s var(--ease) forwards;
+  z-index: 6;
+}
+@keyframes petalCatchAnim {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.8); }
+  100% { opacity: 0; transform: scale(0.5) translateY(-40px); }
+}
+
+/* Gift Box */
+.gift-container {
+  display: none;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  min-height: 350px;
+}
+.gift-container.active { display: flex; }
+
+.gift-box {
+  position: relative;
+  width: 120px; height: 100px;
+  margin: 0 auto 30px;
+  cursor: pointer;
+}
+.gift-base {
+  position: absolute; bottom: 0;
+  width: 120px; height: 70px;
+  background: linear-gradient(135deg, var(--accent) 0%, #d4959e 100%);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(201,130,141,0.3);
+}
+.gift-base::after {
+  content: ''; position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 18px; height: 100%;
+  background: rgba(255,255,255,0.25);
+  border-radius: 2px;
+}
+.gift-lid {
+  position: absolute; top: 0; left: -6px;
+  width: 132px; height: 30px;
+  background: linear-gradient(135deg, #d4959e 0%, var(--accent) 100%);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(201,130,141,0.2);
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2;
+}
+.gift-lid::after {
+  content: ''; position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 18px; height: 100%;
+  background: rgba(255,255,255,0.25);
+  border-radius: 2px;
+}
+.gift-ribbon {
+  position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+  width: 40px; height: 24px; z-index: 3;
+}
+.gift-ribbon::before, .gift-ribbon::after {
+  content: ''; position: absolute; top: 4px;
+  width: 20px; height: 16px;
+  border: 2.5px solid rgba(255,255,255,0.5);
+  border-radius: 50% 50% 0 0;
+}
+.gift-ribbon::before { left: 0; transform: rotate(-15deg); }
+.gift-ribbon::after { right: 0; transform: rotate(15deg); }
+
+.gift-box.opened .gift-lid {
+  transform: translateY(-50px) rotate(-25deg);
+}
+
+.sunflower-burst {
+  position: absolute; top: 20px; left: 50%;
+  transform: translateX(-50%);
+  width: 200px; height: 200px;
+  pointer-events: none;
+}
+.sunflower {
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0;
+  animation: sunflowerPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes sunflowerPop {
+  0% { opacity: 0; transform: scale(0) translateY(0); }
+  50% { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.gift-msg {
+  font-family: var(--caveat);
+  font-size: 1.3rem;
+  color: var(--text);
+  opacity: 0;
+  transition: opacity 0.8s var(--ease);
+  margin-top: 20px;
+}
+.gift-msg.show { opacity: 1; }
+.gift-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.8s var(--ease);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+.gift-sub.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -891,6 +1062,29 @@ p { font-size: 0.95rem; line-height: 1.7; }
     </div>
   </section>
 
+  <!-- MINI GAME -->
+  <section class="sec-minigame" id="minigameSection">
+    <div class="content-col">
+      <div class="game-intro reveal" id="gameIntro">
+        <h2 class="serif">One more thing.</h2>
+        <p>Before you go — a tiny game.<br>Catch the falling petals. ✿</p>
+        <button class="game-start-btn" id="gameStartBtn">Let's play →</button>
+      </div>
+      <div class="game-area" id="gameArea">
+        <div class="game-score" id="gameScore">0 / 10</div>
+      </div>
+      <div class="gift-container" id="giftContainer">
+        <div class="gift-box" id="giftBox">
+          <div class="gift-ribbon"></div>
+          <div class="gift-lid"></div>
+          <div class="gift-base"></div>
+          <div class="sunflower-burst" id="sunflowerBurst"></div>
+        </div>
+        <p class="gift-msg" id="giftMsg">A little garden, just for you 🌻</p>
+        <p class="gift-sub" id="giftSub">Every petal you caught<br>became a sunflower.</p>
+      </div>
+    </div>
+  </section>
 
   <!-- SCREEN 11: GALLERY -->
   <section class="sec-gallery" id="gallerySection">
@@ -1455,6 +1649,129 @@ const Memories = (() => {
 
 
 /* ============================================================
+   MINI GAME MODULE
+   ============================================================ */
+const MiniGame = (() => {
+  const intro = document.getElementById('gameIntro');
+  const area = document.getElementById('gameArea');
+  const giftContainer = document.getElementById('giftContainer');
+  const giftBox = document.getElementById('giftBox');
+  const burst = document.getElementById('sunflowerBurst');
+  const giftMsg = document.getElementById('giftMsg');
+  const giftSub = document.getElementById('giftSub');
+
+  let score = 0;
+  const goal = 10;
+  let spawnTimer = null;
+  let gameRunning = false;
+  const petals = ['🌸', '✿', '❀', '🏵️', '💮'];
+
+  function init() {
+    document.getElementById('gameStartBtn').addEventListener('click', startGame);
+    giftBox.addEventListener('click', openGift);
+  }
+
+  function startGame() {
+    score = 0;
+    gameRunning = true;
+    intro.style.display = 'none';
+    area.classList.add('active');
+    area.innerHTML = '<div class="game-score">0 / ' + goal + '</div>';
+    spawnPetal();
+    spawnTimer = setInterval(spawnPetal, 800);
+  }
+
+  function spawnPetal() {
+    if (!gameRunning) return;
+    const p = document.createElement('div');
+    p.className = 'game-petal';
+    p.textContent = petals[Math.floor(Math.random() * petals.length)];
+    const x = 10 + Math.random() * 80;
+    p.style.left = x + '%';
+    const dur = 2.5 + Math.random() * 2;
+    p.style.animationDuration = dur + 's';
+    p.addEventListener('click', (e) => catchPetal(e, p));
+    p.addEventListener('touchstart', (e) => { e.preventDefault(); catchPetal(e, p); }, { passive: false });
+    area.appendChild(p);
+    setTimeout(() => { if (p.parentNode) p.remove(); }, dur * 1000);
+  }
+
+  function catchPetal(e, el) {
+    if (!gameRunning) return;
+    const rect = el.getBoundingClientRect();
+    const areaRect = area.getBoundingClientRect();
+
+    // Sparkle effect
+    const spark = document.createElement('div');
+    spark.className = 'petal-catch';
+    spark.textContent = '✦';
+    spark.style.left = (rect.left - areaRect.left + rect.width / 2 - 10) + 'px';
+    spark.style.top = (rect.top - areaRect.top + rect.height / 2 - 10) + 'px';
+    area.appendChild(spark);
+    setTimeout(() => spark.remove(), 600);
+
+    el.remove();
+    score++;
+    updateScore();
+
+    if (score >= goal) {
+      endGame();
+    }
+  }
+
+  function updateScore() {
+    const s = area.querySelector('.game-score');
+    if (s) s.textContent = score + ' / ' + goal;
+  }
+
+  function endGame() {
+    gameRunning = false;
+    clearInterval(spawnTimer);
+    area.querySelectorAll('.game-petal').forEach(p => p.remove());
+
+    setTimeout(() => {
+      area.classList.remove('active');
+      giftContainer.classList.add('active');
+    }, 500);
+  }
+
+  function openGift() {
+    if (giftBox.classList.contains('opened')) return;
+    giftBox.classList.add('opened');
+
+    const positions = [
+      { x: -30, y: -80, delay: 0.1, size: 2.2 },
+      { x: 30, y: -90, delay: 0.2, size: 2 },
+      { x: 0, y: -110, delay: 0.15, size: 2.5 },
+      { x: -50, y: -50, delay: 0.3, size: 1.6 },
+      { x: 50, y: -60, delay: 0.25, size: 1.8 },
+      { x: -20, y: -130, delay: 0.35, size: 1.4 },
+      { x: 20, y: -140, delay: 0.4, size: 1.6 },
+      { x: -60, y: -100, delay: 0.45, size: 1.3 },
+      { x: 60, y: -70, delay: 0.3, size: 1.5 },
+      { x: 0, y: -160, delay: 0.5, size: 1.8 },
+    ];
+
+    positions.forEach(pos => {
+      const sf = document.createElement('div');
+      sf.className = 'sunflower';
+      sf.textContent = '🌻';
+      sf.style.left = `calc(50% + ${pos.x}px)`;
+      sf.style.top = `calc(50% + ${pos.y}px)`;
+      sf.style.fontSize = pos.size + 'rem';
+      sf.style.animationDelay = pos.delay + 's';
+      burst.appendChild(sf);
+    });
+
+    setTimeout(() => giftMsg.classList.add('show'), 800);
+    setTimeout(() => giftSub.classList.add('show'), 1500);
+  }
+
+  return { init };
+})();
+
+
+/* ============================================================
    HONESTY MODULE
    ============================================================ */
 const Honesty = (() => {
@@ -1625,6 +1942,7 @@ const App = (() => {
     Memories.build();
     Gallery.build();
     EasterEggs.init();
+    MiniGame.init();
 
     // Populate dynamic text
     document.getElementById('herNameEl').textContent = CONFIG.herName;
