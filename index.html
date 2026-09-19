@@ -416,17 +416,26 @@ p { font-size: 0.95rem; line-height: 1.7; }
   border-radius: 12px;
   margin-bottom: 0.7rem;
   position: relative;
-  transition: transform 0.3s var(--ease), z-index 0.3s var(--ease);
   z-index: 1;
 }
 .memory-photo:hover {
-  transform: scale(1.6);
   z-index: 1000;
 }
 .memory-photo img {
+  position: absolute; top: 0; left: 0;
   width: 100%; height: 100%;
   object-fit: cover;
-  display: block;
+  border-radius: 12px;
+  transition: all 0.3s var(--ease);
+}
+.memory-photo:hover img {
+  width: auto; height: auto;
+  min-width: 100%; min-height: 100%;
+  max-width: 90vw; max-height: 80vh;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(1.1);
+  object-fit: contain;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
 }
 .memory-photo .placeholder {
   width: 100%; height: 100%;
